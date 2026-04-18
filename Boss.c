@@ -5,7 +5,10 @@
 #include <time.h>
 #include <math.h>
 
-// Define regras ou leis do jogo
-#define MAXIMO FLT_MAX
-#define ARQUIVO_SCORES "planetas.txt"
 
+typedef struct Boss {
+    char nome[50];
+    float vida;
+    float atk;
+    
+}Boss
