@@ -12,7 +12,9 @@
 
 typedef struct Player{
     int vida;
-    int pontuação;
+    int pontos;
+    float posX;
+    float posY;
 } player;
 
 typedef struct Tiro{
@@ -32,10 +34,17 @@ typedef struct Asteroide{
 } Asteroide;
 
 int main(void){
-
+    
     const int larguraTela = 800;
     const int alturaTela = 600;
+
     InitWindow(larguraTela, alturaTela, "Defesa Celestial");
+
+    struct Player nave;
+    nave.vida = 100;
+    nave.pontos = 0;
+    nave.posX = larguraTela / 2.0f;
+    nave.posY = alturaTela * 0.8f;
 
     Camera3D camara = { 0 };
     camara.position = (Vector3){ 0.0f, 0.0f, 0.0f }; 
@@ -46,16 +55,27 @@ int main(void){
 
     SetTargetFPS(60);
 
-    struct Player nave = { 100, 0 };
-
     while (!WindowShouldClose()) {
         
+        if (IsKeyDown(KEY_RIGHT)) nave.posX += 5.0f;
+        if (IsKeyDown(KEY_LEFT)) nave.posX -= 5.0f;
+
         BeginDrawing();
             ClearBackground(BLACK);
 
+            // O grid 3D que você fez
             BeginMode3D(camara);
                 DrawGrid(20, 1.0f); 
             EndMode3D();
+
+            float baseNave = 60.0f;
+            float alturaNave = 70.0f;
+
+            Vector2 topo = { nave.posX, nave.posY - (alturaNave/2) };
+            Vector2 esquerda = { nave.posX - (baseNave/2), nave.posY + (baseNave/2) };
+            Vector2 direita = { nave.posX + (baseNave/2), nave.posY + (baseNave/2) };
+
+            DrawTriangle(topo, esquerda, direita, LIME); // Desenha a nave verde
 
             DrawCircleLines(larguraTela / 2, alturaTela / 2, 5, LIME);
             DrawText(TextFormat("VIDA: %d%%", nave.vida), 20, 20, 20, GREEN);
@@ -63,6 +83,7 @@ int main(void){
 
         EndDrawing();
     }
+    
     CloseWindow();
     return 0;
 }
