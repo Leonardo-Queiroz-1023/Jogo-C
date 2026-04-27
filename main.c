@@ -73,17 +73,44 @@ int main(void){
     camara.fovy = 45.0f;                             
     camara.projection = CAMERA_PERSPECTIVE;
 
+    Tiro* listaTiros = NULL;
+
     SetTargetFPS(60);
     HideCursor(); 
 
     while (!WindowShouldClose()) {
         
-        Vector2 miraMouse = GetMousePosition();
+        Vector2 miraMouse = GetMousePosition();-
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+            Vector2 pontaArmaEsq = { 215.0f, 420.0f };
+            Vector2 pontaArmaDir = { 585.0f, 420.0f };
+            
+            listaTiros = Atirar(listaTiros, pontaArmaEsq, miraMouse);
+            listaTiros = Atirar(listaTiros, pontaArmaDir, miraMouse);
+        }
 
+        Tiro* atual = listaTiros;
+        Tiro* anterior = NULL;
+
+        while (atual != NULL) {
+            atual->posicao.x += atual->velocidade.x;
+            atual->posicao.y += atual->velocidade.y;
+
+            if (atual->posicao.y < 0 || atual->posicao.x < 0 || atual->posicao.x > larguraTela) {
+                Tiro* remover = atual;
+                if (anterior == NULL) listaTiros = atual->prox;
+                else anterior->prox = atual->prox;
+                
+                atual = atual->prox;
+                free(remover); 
+            } else {
+                anterior = atual;
+                atual = atual->prox;
+            }
+        }
         BeginDrawing();
             ClearBackground(BLACK);
 
-            // O grid 3D que você fez
             BeginMode3D(camara);
                 DrawGrid(20, 1.0f); 
             EndMode3D();
