@@ -43,8 +43,6 @@ int main(void){
     struct Player nave;
     nave.vida = 100;
     nave.pontos = 0;
-    nave.posX = larguraTela / 2.0f;
-    nave.posY = alturaTela * 0.8f;
 
     Camera3D camara = { 0 };
     camara.position = (Vector3){ 0.0f, 0.0f, 0.0f }; 
@@ -57,8 +55,6 @@ int main(void){
 
     while (!WindowShouldClose()) {
         
-        if (IsKeyDown(KEY_RIGHT)) nave.posX += 5.0f;
-        if (IsKeyDown(KEY_LEFT)) nave.posX -= 5.0f;
 
         BeginDrawing();
             ClearBackground(BLACK);
@@ -67,19 +63,17 @@ int main(void){
             BeginMode3D(camara);
                 DrawGrid(20, 1.0f); 
             EndMode3D();
-
-            float baseNave = 60.0f;
-            float alturaNave = 70.0f;
-
-            Vector2 topo = { nave.posX, nave.posY - (alturaNave/2) };
-            Vector2 esquerda = { nave.posX - (baseNave/2), nave.posY + (baseNave/2) };
-            Vector2 direita = { nave.posX + (baseNave/2), nave.posY + (baseNave/2) };
-
-            DrawTriangle(topo, esquerda, direita, LIME); // Desenha a nave verde
-
-            DrawCircleLines(larguraTela / 2, alturaTela / 2, 5, LIME);
-            DrawText(TextFormat("VIDA: %d%%", nave.vida), 20, 20, 20, GREEN);
-            DrawText("RADAR OFF", 20, 50, 20, RED);
+            // --- O COCKPIT ---
+            // O Painel Inferior (Ocupa os últimos 150 pixels da tela)
+            DrawRectangle(0, 450, larguraTela, 150, DARKGRAY); 
+            DrawRectangle(0, 450, larguraTela, 10, BLACK); // Detalhe da borda
+            
+            // --- HUD (Textos dentro do Painel) ---
+            DrawText(TextFormat("VIDA: %d%%", nave.vida), 30, 480, 20, GREEN);
+            DrawText("RADAR OFF", 30, 520, 20, RED);
+            DrawText("PAINEL DA NAVE", larguraTela/2 - 80, 500, 20, LIGHTGRAY);
+            DrawText(TextFormat("PONTOS: %d", nave.pontos), larguraTela - 150, 480, 20, YELLOW);
+           
 
         EndDrawing();
     }
