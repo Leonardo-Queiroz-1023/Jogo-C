@@ -115,6 +115,12 @@ int main(void){
                 DrawGrid(20, 1.0f); 
             EndMode3D();
 
+            Tiro* tiroDesenho = listaTiros;
+            while (tiroDesenho != NULL) {
+                DrawCircle(tiroDesenho->posicao.x, tiroDesenho->posicao.y, tiroDesenho->raio, YELLOW);
+                tiroDesenho = tiroDesenho->prox;
+            }
+            
             DrawRectangle(200, 420, 30, 80, MAROON); 
             DrawRectangle(570, 420, 30, 80, MAROON); 
 
