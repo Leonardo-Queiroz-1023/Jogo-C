@@ -6,7 +6,6 @@
 #include <math.h>
 #include <stdbool.h>
 
-// Define regras ou leis do jogo
 #define MAXIMO FLT_MAX
 #define ARQUIVO_SCORES "planetas.txt"
 
@@ -31,8 +30,9 @@ typedef struct Asteroide{
     struct Asteroide* prox;
 } Asteroide;
 
+// --- FUNÇÃO DE ATIRAR (Fábrica de Tiros) ---
 Tiro* Atirar(Tiro* lista, Vector2 origem, Vector2 alvo) {
-    Tiro* novoTiro = (Tiro*)malloc(sizeof(Tiro));
+    Tiro* novoTiro = (Tiro*)malloc(sizeof(Tiro)); 
     
     novoTiro->posicao = origem;
     novoTiro->raio = 4.0f;
@@ -51,7 +51,7 @@ Tiro* Atirar(Tiro* lista, Vector2 origem, Vector2 alvo) {
         novoTiro->velocidade.y = -velocidadeBase;
     }
     
-    novoTiro->prox = lista;
+    novoTiro->prox = lista; 
     return novoTiro;
 }
 
@@ -66,6 +66,9 @@ int main(void){
     nave.vida = 100;
     nave.pontos = 0;
 
+    // A LISTA DEVE FICAR AQUI FORA DO WHILE! (Se ficar dentro, os tiros somem)
+    Tiro* listaTiros = NULL;
+
     Camera3D camara = { 0 };
     camara.position = (Vector3){ 0.0f, 0.0f, 0.0f }; 
     camara.target = (Vector3){ 0.0f, 0.0f, 10.0f };  
@@ -73,14 +76,16 @@ int main(void){
     camara.fovy = 45.0f;                             
     camara.projection = CAMERA_PERSPECTIVE;
 
-    Tiro* listaTiros = NULL;
-
     SetTargetFPS(60);
     HideCursor(); 
 
     while (!WindowShouldClose()) {
         
-        Vector2 miraMouse = GetMousePosition();-
+        Vector2 miraMouse = GetMousePosition();
+
+        // --- DETECTANDO O GATILHO ---
+        // Se quiser que atire como metralhadora segurando o botão, 
+        // mude IsMouseButtonPressed para IsMouseButtonDown
         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
             Vector2 pontaArmaEsq = { 215.0f, 420.0f };
             Vector2 pontaArmaDir = { 585.0f, 420.0f };
@@ -89,6 +94,7 @@ int main(void){
             listaTiros = Atirar(listaTiros, pontaArmaDir, miraMouse);
         }
 
+        // --- MOVENDO E LIMPANDO A MEMÓRIA (O Lixeiro) ---
         Tiro* atual = listaTiros;
         Tiro* anterior = NULL;
 
@@ -108,6 +114,7 @@ int main(void){
                 atual = atual->prox;
             }
         }
+
         BeginDrawing();
             ClearBackground(BLACK);
 
@@ -115,21 +122,26 @@ int main(void){
                 DrawGrid(20, 1.0f); 
             EndMode3D();
 
+            // --- DESENHANDO OS TIROS ---
             Tiro* tiroDesenho = listaTiros;
             while (tiroDesenho != NULL) {
                 DrawCircle(tiroDesenho->posicao.x, tiroDesenho->posicao.y, tiroDesenho->raio, YELLOW);
-                tiroDesenho = tiroDesenho->prox;
+                tiroDesenho = tiroDesenho->prox; 
             }
-            
+
+            // --- AS ARMAS ---
             DrawRectangle(200, 420, 30, 80, MAROON); 
             DrawRectangle(570, 420, 30, 80, MAROON); 
 
+            // --- O COCKPIT ---
             DrawRectangle(0, 450, larguraTela, 150, DARKGRAY); 
-            DrawRectangle(0, 450, larguraTela, 10, BLACK);
-
+            DrawRectangle(0, 450, larguraTela, 10, BLACK); 
+            
+            // --- A MIRA ---
             DrawCircleLines(miraMouse.x, miraMouse.y, 10, LIME);
             DrawPixel(miraMouse.x, miraMouse.y, LIME);
 
+            // --- HUD ---
             DrawText(TextFormat("VIDA: %d%%", nave.vida), 30, 480, 20, GREEN);
             DrawText("RADAR OFF", 30, 520, 20, RED);
             DrawText("PAINEL DA NAVE", larguraTela/2 - 80, 500, 20, LIGHTGRAY);
