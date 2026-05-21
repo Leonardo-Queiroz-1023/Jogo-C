@@ -23,7 +23,7 @@ typedef struct Tiro{
 } Tiro;
 
 typedef struct Asteroide{
-    Vector3 posicao;
+    Vector2 posicao;
     float velocidade;
     float raio;
     bool ativo;
@@ -36,7 +36,6 @@ typedef enum TelaJogo {
     TELA_JOGO
 } TelaJogo;
 
-// --- FUNÇÃO DE ATIRAR (Fábrica de Tiros) ---
 Tiro* Atirar(Tiro* lista, Vector2 origem, Vector2 alvo) {
     Tiro* novoTiro = (Tiro*)malloc(sizeof(Tiro)); 
     
@@ -59,6 +58,20 @@ Tiro* Atirar(Tiro* lista, Vector2 origem, Vector2 alvo) {
     
     novoTiro->prox = lista; 
     return novoTiro;
+}
+
+Asteroide* CriarAsteroide(Asteroide* lista, int larguraTela) {
+    Asteroide* novo = (Asteroide*)malloc(sizeof(Asteroide));
+    
+    novo->posicao.x = (float)GetRandomValue(40, larguraTela - 40);
+    novo->posicao.y = -50.0f; 
+    
+    novo->velocidade = (float)GetRandomValue(2, 5); 
+    novo->raio = 30.0f; 
+    novo->ativo = true;
+    
+    novo->prox = lista;
+    return novo;
 }
 
 static void DesenharTextoCentralizado(const char* texto, int y, int tamanho, Color cor) {
@@ -161,14 +174,16 @@ int main(void){
         { tirosDisparados, nave.vida }
     };
 
-    // A LISTA DEVE FICAR AQUI FORA DO WHILE! (Se ficar dentro, os tiros somem)
     Tiro* listaTiros = NULL;
+    Asteroide* listaAsteroides = NULL;
+
+    Texture2D textAsteroide = LoadTexture("assets/asteroide.png");
 
     Camera3D camara = { 0 };
     camara.position = (Vector3){ 0.0f, 0.0f, 0.0f }; 
     camara.target = (Vector3){ 0.0f, 0.0f, 10.0f };  
     camara.up = (Vector3){ 0.0f, 1.0f, 0.0f };
-    camara.fovy = 45.0f;                             
+    camara.fovy = 45.0f;                                             
     camara.projection = CAMERA_PERSPECTIVE;
 
     SetTargetFPS(60);
@@ -227,20 +242,38 @@ int main(void){
             continue;
         }
 
-        // --- DETECTANDO O GATILHO ---
-        // Se quiser que atire como metralhadora segurando o botão, 
-        // mude IsMouseButtonPressed para IsMouseButtonDown
         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
             Vector2 pontaArmaEsq = { 215.0f, 420.0f };
             Vector2 pontaArmaDir = { 585.0f, 420.0f };
             
             listaTiros = Atirar(listaTiros, pontaArmaEsq, miraMouse);
             listaTiros = Atirar(listaTiros, pontaArmaDir, miraMouse);
-            nave.pontos += 10;
             tirosDisparados += 2;
         }
 
-        // --- MOVENDO E LIMPANDO A MEMÓRIA (O Lixeiro) ---
+        if (GetRandomValue(1, 100) <= 2) {
+            listaAsteroides = CriarAsteroide(listaAsteroides, larguraTela);
+        }
+
+        Asteroide* astAtual = listaAsteroides;
+        Asteroide* astAnterior = NULL;
+
+        while (astAtual != NULL) {
+            astAtual->posicao.y += astAtual->velocidade;
+
+            if (astAtual->posicao.y > alturaTela) {
+                Asteroide* remover = astAtual;
+                if (astAnterior == NULL) listaAsteroides = astAtual->prox;
+                else astAnterior->prox = astAtual->prox;
+                
+                astAtual = astAtual->prox;
+                free(remover); 
+            } else {
+                astAnterior = astAtual;
+                astAtual = astAtual->prox;
+            }
+        }
+
         Tiro* atual = listaTiros;
         Tiro* anterior = NULL;
 
@@ -268,26 +301,39 @@ int main(void){
                 DrawGrid(20, 1.0f); 
             EndMode3D();
 
-            // --- DESENHANDO OS TIROS ---
             Tiro* tiroDesenho = listaTiros;
             while (tiroDesenho != NULL) {
                 DrawCircle(tiroDesenho->posicao.x, tiroDesenho->posicao.y, tiroDesenho->raio, YELLOW);
                 tiroDesenho = tiroDesenho->prox; 
             }
 
-            // --- AS ARMAS ---
+            Asteroide* astDesenho = listaAsteroides;
+            while (astDesenho != NULL) {
+                if (textAsteroide.width == 0) {
+                    DrawCircle(astDesenho->posicao.x, astDesenho->posicao.y, astDesenho->raio, RED);
+                } else {
+                    Rectangle origemImg = { 0.0f, 0.0f, (float)textAsteroide.width, (float)textAsteroide.height };
+                    Rectangle destinoTela = { 
+                        astDesenho->posicao.x, 
+                        astDesenho->posicao.y, 
+                        astDesenho->raio * 2.0f, 
+                        astDesenho->raio * 2.0f 
+                    };
+                    Vector2 centroOrigem = { astDesenho->raio, astDesenho->raio };
+                    DrawTexturePro(textAsteroide, origemImg, destinoTela, centroOrigem, 0.0f, WHITE);
+                }
+                astDesenho = astDesenho->prox;
+            }
+
             DrawRectangle(200, 420, 30, 80, MAROON); 
             DrawRectangle(570, 420, 30, 80, MAROON); 
 
-            // --- O COCKPIT ---
             DrawRectangle(0, 450, larguraTela, 150, DARKGRAY); 
             DrawRectangle(0, 450, larguraTela, 10, BLACK); 
             
-            // --- A MIRA ---
             DrawCircleLines(miraMouse.x, miraMouse.y, 10, LIME);
             DrawPixel(miraMouse.x, miraMouse.y, LIME);
 
-            // --- HUD ---
             DrawText(TextFormat("VIDA: %d%%", nave.vida), 30, 480, 20, GREEN);
             DrawText("RADAR OFF", 30, 520, 20, RED);
             DrawText("PAINEL DA NAVE", larguraTela/2 - 80, 500, 20, LIGHTGRAY);
@@ -296,6 +342,8 @@ int main(void){
         EndDrawing();
     }
     
+    UnloadTexture(textAsteroide);
+
     CloseWindow();
     return 0;
 }
