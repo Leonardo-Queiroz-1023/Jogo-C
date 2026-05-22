@@ -243,16 +243,28 @@ int main(void){
         }
 
         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-            Vector2 pontaArmaEsq = { 215.0f, 420.0f };
-            Vector2 pontaArmaDir = { 585.0f, 420.0f };
+            Vector2 pontaArmaCentro = { 400.0f, 420.0f };
             
-            listaTiros = Atirar(listaTiros, pontaArmaEsq, miraMouse);
-            listaTiros = Atirar(listaTiros, pontaArmaDir, miraMouse);
-            tirosDisparados += 2;
+            listaTiros = Atirar(listaTiros, pontaArmaCentro, miraMouse);
+            tirosDisparados += 1;
         }
 
         if (GetRandomValue(1, 100) <= 2) {
             listaAsteroides = CriarAsteroide(listaAsteroides, larguraTela);
+        }
+
+        Tiro* tCheck = listaTiros;
+        while (tCheck != NULL) {
+            Asteroide* aCheck = listaAsteroides;
+            while (aCheck != NULL) {
+                if (tCheck->ativo && aCheck->ativo && CheckCollisionCircles(tCheck->posicao, tCheck->raio, aCheck->posicao, aCheck->raio)) {
+                    tCheck->ativo = false;
+                    aCheck->ativo = false;
+                    nave.pontos += 10;
+                }
+                aCheck = aCheck->prox;
+            }
+            tCheck = tCheck->prox;
         }
 
         Asteroide* astAtual = listaAsteroides;
@@ -261,7 +273,7 @@ int main(void){
         while (astAtual != NULL) {
             astAtual->posicao.y += astAtual->velocidade;
 
-            if (astAtual->posicao.y > alturaTela) {
+            if (astAtual->posicao.y > alturaTela || !astAtual->ativo) {
                 Asteroide* remover = astAtual;
                 if (astAnterior == NULL) listaAsteroides = astAtual->prox;
                 else astAnterior->prox = astAtual->prox;
@@ -281,7 +293,7 @@ int main(void){
             atual->posicao.x += atual->velocidade.x;
             atual->posicao.y += atual->velocidade.y;
 
-            if (atual->posicao.y < 0 || atual->posicao.x < 0 || atual->posicao.x > larguraTela) {
+            if (atual->posicao.y < 0 || atual->posicao.x < 0 || atual->posicao.x > larguraTela || !atual->ativo) {
                 Tiro* remover = atual;
                 if (anterior == NULL) listaTiros = atual->prox;
                 else anterior->prox = atual->prox;
@@ -325,8 +337,7 @@ int main(void){
                 astDesenho = astDesenho->prox;
             }
 
-            DrawRectangle(200, 420, 30, 80, MAROON); 
-            DrawRectangle(570, 420, 30, 80, MAROON); 
+            DrawRectangle(385, 420, 30, 80, MAROON); 
 
             DrawRectangle(0, 450, larguraTela, 150, DARKGRAY); 
             DrawRectangle(0, 450, larguraTela, 10, BLACK); 
