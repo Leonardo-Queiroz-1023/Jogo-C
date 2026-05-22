@@ -7,7 +7,7 @@
 #include <stdbool.h>
 
 #define MAXIMO FLT_MAX
-#define ARQUIVO_SCORES "planetas.txt"
+#define MAX_ESTRELAS 80
 
 typedef struct Player{
     int vida;
@@ -30,6 +30,13 @@ typedef struct Asteroide{
     struct Asteroide* prox;
 } Asteroide;
 
+typedef struct Estrela {
+    Vector2 posicao;
+    float velocidade;
+    float tamanho;
+    Color cor;
+} Estrela;
+
 typedef enum TelaJogo {
     TELA_INICIO,
     TELA_SCORE,
@@ -41,13 +48,13 @@ Tiro* Atirar(Tiro* lista, Vector2 origem, Vector2 alvo) {
     Tiro* novoTiro = (Tiro*)malloc(sizeof(Tiro)); 
     
     novoTiro->posicao = origem;
-    novoTiro->raio = 4.0f;
+    novoTiro->raio = 5.0f;
     novoTiro->ativo = true;
     
     float dx = alvo.x - origem.x;
     float dy = alvo.y - origem.y;
     float distancia = sqrt(dx*dx + dy*dy);
-    float velocidadeBase = 15.0f; 
+    float velocidadeBase = 16.0f; 
     
     if (distancia != 0) {
         novoTiro->velocidade.x = (dx / distancia) * velocidadeBase;
@@ -67,8 +74,8 @@ Asteroide* CriarAsteroide(Asteroide* lista, int larguraTela) {
     novo->posicao.x = (float)GetRandomValue(40, larguraTela - 40);
     novo->posicao.y = -50.0f; 
     
-    novo->velocidade = (float)GetRandomValue(2, 5); 
-    novo->raio = 30.0f; 
+    novo->velocidade = (float)GetRandomValue(3, 6); 
+    novo->raio = (float)GetRandomValue(25, 45); 
     novo->ativo = true;
     
     novo->prox = lista;
@@ -89,86 +96,89 @@ static void DesenharTelaInicio(int larguraTela, int alturaTela) {
         52.0f
     };
 
-    ClearBackground((Color){ 8, 11, 24, 255 });
+    ClearBackground((Color){ 6, 8, 18, 255 });
 
     for (int i = 0; i < 70; i++) {
         float x = (float)((i * 113) % larguraTela);
-        float y = fmodf((float)((i * 79) % alturaTela) + tempo * (8.0f + (float)(i % 4)), (float)alturaTela);
+        float y = fmodf((float)((i * 79) % alturaTela) + tempo * (12.0f + (float)(i % 4)), (float)alturaTela);
         Color cor = (i % 3 == 0) ? SKYBLUE : LIGHTGRAY;
         DrawPixel((int)x, (int)y, cor);
     }
 
-    DrawCircleGradient(larguraTela / 2, 215, 165, (Color){ 21, 44, 84, 180 }, (Color){ 8, 11, 24, 0 });
-    DrawCircleLines(larguraTela / 2, 215, 118, (Color){ 65, 159, 255, 140 });
-    DrawCircleLines(larguraTela / 2, 215, 82, (Color){ 129, 230, 217, 120 });
+    DrawCircleGradient(larguraTela / 2, 215, 165, (Color){ 14, 34, 74, 180 }, (Color){ 6, 8, 18, 0 });
+    DrawCircleLines(larguraTela / 2, 215, 118, (Color){ 0, 150, 255, 140 });
+    DrawCircleLines(larguraTela / 2, 215, 82, (Color){ 0, 230, 200, 120 });
 
-    DesenharTextoCentralizado("DEFESA CELESTIAL", 170, 44, RAYWHITE);
-    DesenharTextoCentralizado("Proteja a nave dos perigos do espaco", 225, 20, LIGHTGRAY);
+    DrawTextPro(GetFontDefault(), "DEFESA CELESTIAL", (Vector2){ (float)(larguraTela/2 - MeasureText("DEFESA CELESTIAL", 46)/2), 165 }, (Vector2){0,0}, 0.0f, 46, 3.0f, WHITE);
+    DesenharTextoCentralizado("Proteja a base orbital dos perigos do espaco", 225, 18, LIGHTGRAY);
 
-    DrawRectangleRounded(botaoIniciar, 0.12f, 8, (Color){ 30, 132, 73, 255 });
-    DrawRectangleRoundedLines(botaoIniciar, 0.12f, 8, (Color){ 144, 238, 144, 255 });
-    DesenharTextoCentralizado("INICIAR", (int)botaoIniciar.y + 15, 22, RAYWHITE);
+    DrawRectangleRounded(botaoIniciar, 0.2f, 8, (Color){ 16, 120, 60, 255 });
+    DrawRectangleRoundedLines(botaoIniciar, 0.2f, 8, (Color){ 0, 255, 120, 255 });
+    DesenharTextoCentralizado("INICIAR SISTEMAS", (int)botaoIniciar.y + 15, 20, RAYWHITE);
 
-    DesenharTextoCentralizado("Pressione ENTER ou clique para jogar", 430, 20, YELLOW);
-    DesenharTextoCentralizado("Pressione S para ver os scores", 462, 18, SKYBLUE);
-    DesenharTextoCentralizado("Use o mouse para mirar e clique para atirar", 495, 18, GRAY);
+    DesenharTextoCentralizado("Pressione ENTER ou clique para jogar", 440, 18, YELLOW);
+    DesenharTextoCentralizado("Pressione S para ver os registros de score", 470, 16, SKYBLUE);
 }
 
 static void DesenharTelaScore(int larguraTela, int alturaTela, int scores[2][2]) {
     const int linhas = 2;
     const int colunas = 2;
-    const int larguraCelula = 210;
-    const int alturaCelula = 105;
-    const int espaco = 18;
+    const int larguraCelula = 220;
+    const int alturaCelula = 110;
+    const int espaco = 20;
     const int larguraGrade = colunas * larguraCelula + (colunas - 1) * espaco;
     const int alturaGrade = linhas * alturaCelula + (linhas - 1) * espaco;
     const int inicioX = larguraTela / 2 - larguraGrade / 2;
     const int inicioY = alturaTela / 2 - alturaGrade / 2 + 20;
+    
     const char* nomes[2][2] = {
-        { "SCORE ATUAL", "RECORDE" },
-        { "DISPAROS", "VIDA" }
+        { "SCORE DA MISSÃO", "RECORDE GLOBAL" },
+        { "DISPAROS EFETUADOS", "INTEGRIDADE FINAL" }
     };
     Color cores[2][2] = {
-        { YELLOW, GREEN },
-        { SKYBLUE, LIME }
+        { YELLOW, SKYBLUE }, // Trocado de CYAN para SKYBLUE
+        { MAGENTA, LIME }
     };
 
-    ClearBackground((Color){ 10, 14, 28, 255 });
+    ClearBackground((Color){ 5, 8, 16, 255 });
 
-    DesenharTextoCentralizado("PAINEL DE SCORE", 65, 40, RAYWHITE);
-    DesenharTextoCentralizado("Matriz 2x2 de desempenho", 112, 20, LIGHTGRAY);
+    DesenharTextoCentralizado("BANCO DE DADOS TÁTICOS", 65, 36, RAYWHITE);
+    DesenharTextoCentralizado("Estatísticas de desempenho em tempo real", 112, 18, GRAY);
 
     for (int linha = 0; linha < linhas; linha++) {
         for (int coluna = 0; coluna < colunas; coluna++) {
             int x = inicioX + coluna * (larguraCelula + espaco);
             int y = inicioY + linha * (alturaCelula + espaco);
             Rectangle celula = { (float)x, (float)y, (float)larguraCelula, (float)alturaCelula };
-            int larguraValor = MeasureText(TextFormat("%d", scores[linha][coluna]), 36);
+            int larguraValor = MeasureText(TextFormat("%d", scores[linha][coluna]), 38);
 
-            DrawRectangleRounded(celula, 0.08f, 6, (Color){ 22, 33, 58, 255 });
-            DrawRectangleRoundedLines(celula, 0.08f, 6, (Color){ 86, 180, 255, 255 });
-            DrawText(nomes[linha][coluna], x + 18, y + 18, 18, LIGHTGRAY);
-            DrawText(TextFormat("[%d][%d]", linha, coluna), x + larguraCelula - 72, y + 18, 16, GRAY);
-            DrawText(TextFormat("%d", scores[linha][coluna]), x + larguraCelula / 2 - larguraValor / 2, y + 53, 36, cores[linha][coluna]);
+            DrawRectangleRounded(celula, 0.1f, 6, (Color){ 12, 19, 36, 255 });
+            DrawRectangleRoundedLines(celula, 0.1f, 6, (Color){ 0, 180, 255, 150 });
+            DrawText(nomes[linha][coluna], x + 15, y + 15, 14, LIGHTGRAY);
+            DrawText(TextFormat("[%d][%d]", linha, coluna), x + larguraCelula - 55, y + 15, 12, DARKGRAY);
+            DrawText(TextFormat("%d", scores[linha][coluna]), x + larguraCelula / 2 - larguraValor / 2, y + 50, 38, cores[linha][coluna]);
         }
     }
 
-    DesenharTextoCentralizado("[0][0] score | [0][1] recorde | [1][0] disparos | [1][1] vida", 438, 17, LIGHTGRAY);
-    DesenharTextoCentralizado("BACKSPACE volta | ENTER inicia/retorna ao jogo", 472, 18, YELLOW);
+    DesenharTextoCentralizado("BACKSPACE retorna | ENTER inicia nova simulação", 475, 18, YELLOW);
 }
 
 static void DesenharTelaGameOver(int alturaTela, int pontosFinais) {
-    ClearBackground((Color){ 36, 11, 11, 255 }); // Fundo vermelho escuro
+    ClearBackground((Color){ 20, 5, 5, 255 }); 
 
-    DesenharTextoCentralizado("GAME OVER", alturaTela / 2 - 100, 56, RED);
-    DrawCircleLines(400, alturaTela / 2 - 75, 120, (Color){ 231, 76, 60, 60 });
+    DrawCircleGradient(400, alturaTela / 2 - 60, 200, (Color){ 180, 0, 0, 40 }, (Color){ 20, 5, 5, 0 });
     
-    DesenharTextoCentralizado("A defesa da nave falhou!", alturaTela / 2 - 30, 20, LIGHTGRAY);
+    DesenharTextoCentralizado("SISTEMA DESTRUÍDO", alturaTela / 2 - 110, 50, RED);
+    DesenharTextoCentralizado("A integridade do casco chegou a 0%", alturaTela / 2 - 40, 18, LIGHTGRAY);
     
-    DesenharTextoCentralizado(TextFormat("PONTUACAO FINAL: %d", pontosFinais), alturaTela / 2 + 15, 28, YELLOW);
+    DrawRectangle(250, alturaTela / 2, 300, 50, (Color){ 40, 10, 10, 255 });
+    DrawRectangleLines(250, alturaTela / 2, 300, 50, RED);
     
-    DesenharTextoCentralizado("Pressione ENTER para tentar novamente", alturaTela / 2 + 80, 20, RAYWHITE);
-    DesenharTextoCentralizado("Pressione S para ver o Painel de Scores", alturaTela / 2 + 115, 18, SKYBLUE);
+    int largPontos = MeasureText(TextFormat("PONTOS: %d", pontosFinais), 24);
+    DrawText(TextFormat("PONTOS OBTIDOS: %d", pontosFinais), 400 - largPontos/2, alturaTela / 2 + 12, 24, GOLD);
+    
+    DesenharTextoCentralizado("Pressione ENTER para reinicializar os motores", alturaTela / 2 + 85, 18, RAYWHITE);
+    DesenharTextoCentralizado("Pressione S para ver o registro de falhas", alturaTela / 2 + 120, 16, SKYBLUE);
 }
 
 int main(void){
@@ -176,7 +186,7 @@ int main(void){
     const int larguraTela = 800;
     const int alturaTela = 600;
 
-    InitWindow(larguraTela, alturaTela, "Defesa Celestial");
+    InitWindow(larguraTela, alturaTela, "Defesa Celestial - Core Upgrade");
 
     struct Player nave;
     nave.vida = 100;
@@ -192,7 +202,18 @@ int main(void){
     Tiro* listaTiros = NULL;
     Asteroide* listaAsteroides = NULL;
 
-    Texture2D textAsteroide = LoadTexture("assets/asteroide.png");
+    Estrela estrelas[MAX_ESTRELAS];
+    for(int i = 0; i < MAX_ESTRELAS; i++) {
+        estrelas[i].posicao.x = (float)GetRandomValue(0, larguraTela);
+        estrelas[i].posicao.y = (float)GetRandomValue(0, alturaTela - 150);
+        estrelas[i].velocidade = (float)GetRandomValue(1, 4);
+        estrelas[i].tamanho = estrelas[i].velocidade * 0.7f;
+        estrelas[i].cor = (GetRandomValue(0, 1) == 0) ? SKYBLUE : WHITE;
+    }
+
+    // Configurado exatamente com o nome que aparece na sua pasta assets
+    Texture2D textAsteroide = LoadTexture("assets/asteroide.png.png");
+    Texture2D textNave = LoadTexture("assets/nave.png"); 
 
     Camera3D camara = { 0 };
     camara.position = (Vector3){ 0.0f, 0.0f, 0.0f }; 
@@ -215,32 +236,27 @@ int main(void){
         matrizScores[1][0] = tirosDisparados;
         matrizScores[1][1] = nave.vida;
 
-        // --- TELA INICIAL ---
         if (telaAtual == TELA_INICIO) {
             if (IsKeyPressed(KEY_S)) {
                 telaAnteriorScore = TELA_INICIO;
                 telaAtual = TELA_SCORE;
             }
-
             if (IsKeyPressed(KEY_ENTER) || IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
                 telaAtual = TELA_JOGO;
                 HideCursor();
             }
-
             BeginDrawing();
                 DesenharTelaInicio(larguraTela, alturaTela);
             EndDrawing();
             continue;
         }
 
-        // --- TELA DE SCORES ---
         if (telaAtual == TELA_SCORE) {
             if (IsKeyPressed(KEY_BACKSPACE)) {
                 telaAtual = telaAnteriorScore;
                 if (telaAtual == TELA_JOGO) HideCursor();
                 else ShowCursor();
             }
-
             if (IsKeyPressed(KEY_ENTER)) {
                 if (telaAnteriorScore == TELA_GAMEOVER) {
                     nave.vida = 100;
@@ -249,52 +265,37 @@ int main(void){
                 telaAtual = TELA_JOGO;
                 HideCursor();
             }
-
             BeginDrawing();
                 DesenharTelaScore(larguraTela, alturaTela, matrizScores);
             EndDrawing();
             continue;
         }
 
-        // --- TELA DE GAME OVER ---
         if (telaAtual == TELA_GAMEOVER) {
             if (IsKeyPressed(KEY_S)) {
                 telaAnteriorScore = TELA_GAMEOVER;
                 telaAtual = TELA_SCORE;
             }
-
             if (IsKeyPressed(KEY_ENTER)) {
-                // Limpar listas de entidades antigas da memoria
                 Tiro* t = listaTiros;
-                while (t != NULL) {
-                    Tiro* temp = t;
-                    t = t->prox;
-                    free(temp);
-                }
+                while (t != NULL) { Tiro* temp = t; t = t->prox; free(temp); }
                 listaTiros = NULL;
 
                 Asteroide* a = listaAsteroides;
-                while (a != NULL) {
-                    Asteroide* temp = a;
-                    a = a->prox;
-                    free(temp);
-                }
+                while (a != NULL) { Asteroide* temp = a; a = a->prox; free(temp); }
                 listaAsteroides = NULL;
 
-                // Resetar os atributos do jogador
                 nave.vida = 100;
                 nave.pontos = 0;
                 telaAtual = TELA_JOGO;
                 HideCursor();
             }
-
             BeginDrawing();
                 DesenharTelaGameOver(alturaTela, nave.pontos);
             EndDrawing();
             continue;
         }
 
-        // --- LOGICA PRINCIPAL DO JOGO (TELA_JOGO) ---
         if (IsKeyPressed(KEY_S)) {
             telaAnteriorScore = TELA_JOGO;
             telaAtual = TELA_SCORE;
@@ -302,18 +303,24 @@ int main(void){
             continue;
         }
 
-        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-            Vector2 pontaArmaCentro = { 400.0f, 420.0f };
-            
+        for(int i = 0; i < MAX_ESTRELAS; i++) {
+            estrelas[i].posicao.y += estrelas[i].velocidade;
+            if(estrelas[i].posicao.y > 450) {
+                estrelas[i].posicao.y = 0;
+                estrelas[i].posicao.x = (float)GetRandomValue(0, larguraTela);
+            }
+        }
+
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && miraMouse.y < 450) {
+            Vector2 pontaArmaCentro = { 400.0f, 410.0f };
             listaTiros = Atirar(listaTiros, pontaArmaCentro, miraMouse);
             tirosDisparados += 1;
         }
 
-        if (GetRandomValue(1, 100) <= 2) {
+        if (GetRandomValue(1, 100) <= 3) {
             listaAsteroides = CriarAsteroide(listaAsteroides, larguraTela);
         }
 
-        // Colisao: Tiro vs Asteroide
         Tiro* tCheck = listaTiros;
         while (tCheck != NULL) {
             Asteroide* aCheck = listaAsteroides;
@@ -321,24 +328,21 @@ int main(void){
                 if (tCheck->ativo && aCheck->ativo && CheckCollisionCircles(tCheck->posicao, tCheck->raio, aCheck->posicao, aCheck->raio)) {
                     tCheck->ativo = false;
                     aCheck->ativo = false;
-                    nave.pontos += 10;
+                    nave.pontos += 15; 
                 }
                 aCheck = aCheck->prox;
             }
             tCheck = tCheck->prox;
         }
 
-        // Atualizacao e Limpeza de Asteroides
         Asteroide* astAtual = listaAsteroides;
         Asteroide* astAnterior = NULL;
-
         while (astAtual != NULL) {
             astAtual->posicao.y += astAtual->velocidade;
 
-            // Asteroide atingiu a base da nave
-            if (astAtual->ativo && (astAtual->posicao.y + astAtual->raio >= 450.0f)) {
+            if (astAtual->ativo && (astAtual->posicao.y + astAtual->raio >= 430.0f)) {
                 astAtual->ativo = false;
-                nave.vida -= 10;
+                nave.vida -= 15;
                 if (nave.vida <= 0) {
                     nave.vida = 0;
                     telaAtual = TELA_GAMEOVER;
@@ -350,7 +354,6 @@ int main(void){
                 Asteroide* remover = astAtual;
                 if (astAnterior == NULL) listaAsteroides = astAtual->prox;
                 else astAnterior->prox = astAtual->prox;
-                
                 astAtual = astAtual->prox;
                 free(remover); 
             } else {
@@ -359,10 +362,8 @@ int main(void){
             }
         }
 
-        // Atualizacao e Limpeza de Tiros
         Tiro* atual = listaTiros;
         Tiro* anterior = NULL;
-
         while (atual != NULL) {
             atual->posicao.x += atual->velocidade.x;
             atual->posicao.y += atual->velocidade.y;
@@ -371,7 +372,6 @@ int main(void){
                 Tiro* remover = atual;
                 if (anterior == NULL) listaTiros = atual->prox;
                 else anterior->prox = atual->prox;
-                
                 atual = atual->prox;
                 free(remover); 
             } else {
@@ -380,55 +380,93 @@ int main(void){
             }
         }
 
-        // Renderizacao do Jogo Ativo
         BeginDrawing();
-            ClearBackground(BLACK);
+            ClearBackground((Color){ 4, 5, 12, 255 }); 
 
-            BeginMode3D(camara);
-                DrawGrid(20, 1.0f); 
-            EndMode3D();
+            for(int i = 0; i < MAX_ESTRELAS; i++) {
+                DrawCircle(estrelas[i].posicao.x, estrelas[i].posicao.y, estrelas[i].tamanho, estrelas[i].cor);
+            }
 
             Tiro* tiroDesenho = listaTiros;
             while (tiroDesenho != NULL) {
-                DrawCircle(tiroDesenho->posicao.x, tiroDesenho->posicao.y, tiroDesenho->raio, YELLOW);
+                DrawCircle(tiroDesenho->posicao.x, tiroDesenho->posicao.y, tiroDesenho->raio + 2.0f, (Color){ 255, 230, 0, 100 });
+                DrawCircle(tiroDesenho->posicao.x, tiroDesenho->posicao.y, tiroDesenho->raio, ORANGE);
                 tiroDesenho = tiroDesenho->prox; 
             }
 
             Asteroide* astDesenho = listaAsteroides;
             while (astDesenho != NULL) {
                 if (textAsteroide.width == 0) {
-                    DrawCircle(astDesenho->posicao.x, astDesenho->posicao.y, astDesenho->raio, RED);
+                    DrawCircleGradient(astDesenho->posicao.x, astDesenho->posicao.y, astDesenho->raio, DARKGRAY, MAROON);
+                    DrawCircleLines(astDesenho->posicao.x, astDesenho->posicao.y, astDesenho->raio, GRAY);
                 } else {
                     Rectangle origemImg = { 0.0f, 0.0f, (float)textAsteroide.width, (float)textAsteroide.height };
                     Rectangle destinoTela = { 
                         astDesenho->posicao.x, 
                         astDesenho->posicao.y, 
-                        astDesenho->raio * 2.0f, 
-                        astDesenho->raio * 2.0f 
+                        astDesenho->raio * 2.1f, 
+                        astDesenho->raio * 2.1f 
                     };
-                    Vector2 centroOrigem = { astDesenho->raio, astDesenho->raio };
-                    DrawTexturePro(textAsteroide, origemImg, destinoTela, centroOrigem, 0.0f, WHITE);
+                    Vector2 centroOrigem = { astDesenho->raio * 1.05f, astDesenho->raio * 1.05f };
+                    DrawTexturePro(textAsteroide, origemImg, destinoTela, centroOrigem, astDesenho->posicao.y * 0.5f, WHITE); 
                 }
                 astDesenho = astDesenho->prox;
             }
 
-            DrawRectangle(385, 420, 30, 80, MAROON); 
+            if (textNave.width == 0) {
+                Vector2 p1 = { 400, 390 };
+                Vector2 p2 = { 365, 445 };
+                Vector2 p3 = { 435, 445 };
+                DrawTriangle(p1, p2, p3, DARKBLUE);
+                DrawTriangleLines(p1, p2, p3, SKYBLUE); // Mudado de CYAN para SKYBLUE
+                DrawRectangle(393, 410, 14, 30, SKYBLUE); 
+                DrawCircleGradient(400, 445, 12, ORANGE, (Color){255,0,0,0}); 
+            } else {
+                Rectangle origNave = { 0.0f, 0.0f, (float)textNave.width, (float)textNave.height };
+                Rectangle destNave = { 400.0f, 420.0f, 70.0f, 70.0f };
+                Vector2 centroNave = { 35.0f, 35.0f };
+                DrawTexturePro(textNave, origNave, destNave, centroNave, 0.0f, WHITE);
+            }
 
-            DrawRectangle(0, 450, larguraTela, 150, DARKGRAY); 
-            DrawRectangle(0, 450, larguraTela, 10, BLACK); 
+            DrawRectangle(0, 450, larguraTela, 150, (Color){ 10, 14, 26, 255 }); 
+            DrawRectangle(0, 450, larguraTela, 4, SKYBLUE); // Mudado de CYAN para SKYBLUE
             
-            DrawCircleLines(miraMouse.x, miraMouse.y, 10, LIME);
-            DrawPixel(miraMouse.x, miraMouse.y, LIME);
+            for(int gi = 0; gi < larguraTela; gi += 40) {
+                DrawLine(gi, 454, gi, 600, (Color){ 0, 150, 255, 25 });
+            }
 
-            DrawText(TextFormat("VIDA: %d%%", nave.vida), 30, 480, 20, GREEN);
-            DrawText("RADAR OFF", 30, 520, 20, RED);
-            DrawText("PAINEL DA NAVE", larguraTela/2 - 80, 500, 20, LIGHTGRAY);
-            DrawText(TextFormat("PONTOS: %d", nave.pontos), larguraTela - 150, 480, 20, YELLOW);
+            if (miraMouse.y < 450) {
+                DrawCircleLines(miraMouse.x, miraMouse.y, 14, (Color){ 0, 255, 100, 180 });
+                DrawLine(miraMouse.x - 20, miraMouse.y, miraMouse.x + 20, miraMouse.y, LIME);
+                DrawLine(miraMouse.x, miraMouse.y - 20, miraMouse.x, miraMouse.y + 20, LIME);
+            }
+
+            Color corVida = GREEN;
+            if (nave.vida <= 30) corVida = RED;
+            else if (nave.vida <= 60) corVida = ORANGE;
+
+            DrawText("ESCUDO DA NAVE:", 35, 480, 14, LIGHTGRAY);
+            DrawRectangle(35, 505, 200, 22, (Color){ 30, 30, 45, 255 }); 
+            DrawRectangle(35, 505, (int)(nave.vida * 2), 22, corVida);     
+            DrawRectangleLines(35, 505, 200, 22, WHITE);
+            DrawText(TextFormat("%d%%", nave.vida), 115, 509, 15, BLACK);
+
+            DrawRectangleLines(300, 475, 200, 80, (Color){ 0, 150, 255, 100 });
+            DrawText("STATUS DE COMBATE", 325, 485, 14, SKYBLUE);
+            if(nave.vida <= 30 && (int)(GetTime() * 3) % 2 == 0) {
+                DrawText("PERIGO CRÍTICO", 335, 518, 16, RED);
+            } else {
+                DrawText("SISTEMAS OK", 348, 518, 16, GREEN);
+            }
+
+            DrawText(TextFormat("PONTUAÇÃO: %05d", nave.pontos), larguraTela - 210, 490, 18, YELLOW);
+            DrawText(TextFormat("RECORDE: %05d", recorde), larguraTela - 210, 520, 14, GOLD);
             
         EndDrawing();
     }
     
     UnloadTexture(textAsteroide);
+    UnloadTexture(textNave);
 
     CloseWindow();
     return 0;
