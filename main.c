@@ -33,7 +33,8 @@ typedef struct Asteroide{
 typedef enum TelaJogo {
     TELA_INICIO,
     TELA_SCORE,
-    TELA_JOGO
+    TELA_JOGO,
+    TELA_GAMEOVER
 } TelaJogo;
 
 Tiro* Atirar(Tiro* lista, Vector2 origem, Vector2 alvo) {
@@ -156,6 +157,20 @@ static void DesenharTelaScore(int larguraTela, int alturaTela, int scores[2][2])
     DesenharTextoCentralizado("BACKSPACE volta | ENTER inicia/retorna ao jogo", 472, 18, YELLOW);
 }
 
+static void DesenharTelaGameOver(int alturaTela, int pontosFinais) {
+    ClearBackground((Color){ 36, 11, 11, 255 }); // Fundo vermelho escuro
+
+    DesenharTextoCentralizado("GAME OVER", alturaTela / 2 - 100, 56, RED);
+    DrawCircleLines(400, alturaTela / 2 - 75, 120, (Color){ 231, 76, 60, 60 });
+    
+    DesenharTextoCentralizado("A defesa da nave falhou!", alturaTela / 2 - 30, 20, LIGHTGRAY);
+    
+    DesenharTextoCentralizado(TextFormat("PONTUACAO FINAL: %d", pontosFinais), alturaTela / 2 + 15, 28, YELLOW);
+    
+    DesenharTextoCentralizado("Pressione ENTER para tentar novamente", alturaTela / 2 + 80, 20, RAYWHITE);
+    DesenharTextoCentralizado("Pressione S para ver o Painel de Scores", alturaTela / 2 + 115, 18, SKYBLUE);
+}
+
 int main(void){
     
     const int larguraTela = 800;
@@ -200,6 +215,7 @@ int main(void){
         matrizScores[1][0] = tirosDisparados;
         matrizScores[1][1] = nave.vida;
 
+        // --- TELA INICIAL ---
         if (telaAtual == TELA_INICIO) {
             if (IsKeyPressed(KEY_S)) {
                 telaAnteriorScore = TELA_INICIO;
@@ -217,6 +233,7 @@ int main(void){
             continue;
         }
 
+        // --- TELA DE SCORES ---
         if (telaAtual == TELA_SCORE) {
             if (IsKeyPressed(KEY_BACKSPACE)) {
                 telaAtual = telaAnteriorScore;
@@ -225,6 +242,10 @@ int main(void){
             }
 
             if (IsKeyPressed(KEY_ENTER)) {
+                if (telaAnteriorScore == TELA_GAMEOVER) {
+                    nave.vida = 100;
+                    nave.pontos = 0;
+                }
                 telaAtual = TELA_JOGO;
                 HideCursor();
             }
@@ -235,6 +256,45 @@ int main(void){
             continue;
         }
 
+        // --- TELA DE GAME OVER ---
+        if (telaAtual == TELA_GAMEOVER) {
+            if (IsKeyPressed(KEY_S)) {
+                telaAnteriorScore = TELA_GAMEOVER;
+                telaAtual = TELA_SCORE;
+            }
+
+            if (IsKeyPressed(KEY_ENTER)) {
+                // Limpar listas de entidades antigas da memoria
+                Tiro* t = listaTiros;
+                while (t != NULL) {
+                    Tiro* temp = t;
+                    t = t->prox;
+                    free(temp);
+                }
+                listaTiros = NULL;
+
+                Asteroide* a = listaAsteroides;
+                while (a != NULL) {
+                    Asteroide* temp = a;
+                    a = a->prox;
+                    free(temp);
+                }
+                listaAsteroides = NULL;
+
+                // Resetar os atributos do jogador
+                nave.vida = 100;
+                nave.pontos = 0;
+                telaAtual = TELA_JOGO;
+                HideCursor();
+            }
+
+            BeginDrawing();
+                DesenharTelaGameOver(alturaTela, nave.pontos);
+            EndDrawing();
+            continue;
+        }
+
+        // --- LOGICA PRINCIPAL DO JOGO (TELA_JOGO) ---
         if (IsKeyPressed(KEY_S)) {
             telaAnteriorScore = TELA_JOGO;
             telaAtual = TELA_SCORE;
@@ -253,6 +313,7 @@ int main(void){
             listaAsteroides = CriarAsteroide(listaAsteroides, larguraTela);
         }
 
+        // Colisao: Tiro vs Asteroide
         Tiro* tCheck = listaTiros;
         while (tCheck != NULL) {
             Asteroide* aCheck = listaAsteroides;
@@ -267,11 +328,23 @@ int main(void){
             tCheck = tCheck->prox;
         }
 
+        // Atualizacao e Limpeza de Asteroides
         Asteroide* astAtual = listaAsteroides;
         Asteroide* astAnterior = NULL;
 
         while (astAtual != NULL) {
             astAtual->posicao.y += astAtual->velocidade;
+
+            // Asteroide atingiu a base da nave
+            if (astAtual->ativo && (astAtual->posicao.y + astAtual->raio >= 450.0f)) {
+                astAtual->ativo = false;
+                nave.vida -= 10;
+                if (nave.vida <= 0) {
+                    nave.vida = 0;
+                    telaAtual = TELA_GAMEOVER;
+                    ShowCursor();
+                }
+            }
 
             if (astAtual->posicao.y > alturaTela || !astAtual->ativo) {
                 Asteroide* remover = astAtual;
@@ -286,6 +359,7 @@ int main(void){
             }
         }
 
+        // Atualizacao e Limpeza de Tiros
         Tiro* atual = listaTiros;
         Tiro* anterior = NULL;
 
@@ -306,6 +380,7 @@ int main(void){
             }
         }
 
+        // Renderizacao do Jogo Ativo
         BeginDrawing();
             ClearBackground(BLACK);
 
