@@ -1,5 +1,4 @@
 #define ARQUIVO_PONTOS "DADOS.txt"
-#include "main.c"
 #define linhas 10
 #define colunas 2
 
@@ -10,8 +9,8 @@ typedef struct lista{
 } Lista;
 
 static Lista* criarNo(int pontos,int tempo){
-    Lista* novoNo = (Lista*)malloc(sizeof(Lista));
-    if (novoNo == NULL){
+    Lista* NovoNo = (Lista*)malloc(sizeof(Lista));
+    if (NovoNo == NULL){
         printf("Erro ao alocar memória para o nó.\n");
         return NULL;
     }
@@ -47,4 +46,18 @@ static void salvarPontos(Lista* head){
         atual = atual->prox;
     }
     fclose(arquivo);
+}
+static Lista* LerPontos(){
+     Lista*head=NULL;
+     FILE* arquivo = fopen(ARQUIVO_PONTOS, "r");
+    if (arquivo == NULL){
+        printf("Erro ao abrir o arquivo para leitura.\n");
+        return NULL;
+    }
+    int pontos, tempo;
+    while(fscanf(arquivo, "%d %d", &pontos , &tempo)==2){
+        Add_crecente(&head, pontos, tempo);
+    }
+    fclose(arquivo);
+    return head;
 }

@@ -5,6 +5,7 @@
 #include <time.h>
 #include <math.h>
 #include <stdbool.h>
+#include "Salvar.c"
 
 #define MAXIMO FLT_MAX
 #define MAX_ESTRELAS 80
@@ -191,7 +192,11 @@ int main(void){
     struct Player nave;
     nave.vida = 100;
     nave.pontos = 0;
+    Lista* historicoPontos = lerPontos();
     int recorde = 0;
+    if (historicoPontos != NULL) {
+        recorde = historicoPontos->pontos;
+    }
     int tirosDisparados = 0;
 
     int matrizScores[2][2] = {
@@ -345,6 +350,12 @@ int main(void){
                 nave.vida -= 15;
                 if (nave.vida <= 0) {
                     nave.vida = 0;
+
+                    // --- SALVA O ARQUIVO AQUI ---
+                    Add_crecente(&historicoScores, nave.pontos, (int)GetTime());
+                    salvarPontos(historicoScores);
+                    // ----------------------------
+
                     telaAtual = TELA_GAMEOVER;
                     ShowCursor();
                 }
