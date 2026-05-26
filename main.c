@@ -122,13 +122,13 @@ static void DesenharTelaInicio(int larguraTela, int alturaTela) {
 }
 
 static void DesenharTelaScore(int larguraTela, int alturaTela, int scores[2][2]) {
-    const int linhas = 2;
-    const int colunas = 2;
+    const int qtdLinhas = 2;
+    const int qtdColunas = 2;
     const int larguraCelula = 220;
     const int alturaCelula = 110;
     const int espaco = 20;
-    const int larguraGrade = colunas * larguraCelula + (colunas - 1) * espaco;
-    const int alturaGrade = linhas * alturaCelula + (linhas - 1) * espaco;
+    const int larguraGrade = qtdColunas * larguraCelula + (qtdColunas - 1) * espaco;
+    const int alturaGrade = qtdLinhas * alturaCelula + (qtdLinhas - 1) * espaco;
     const int inicioX = larguraTela / 2 - larguraGrade / 2;
     const int inicioY = alturaTela / 2 - alturaGrade / 2 + 20;
     
@@ -137,7 +137,7 @@ static void DesenharTelaScore(int larguraTela, int alturaTela, int scores[2][2])
         { "DISPAROS EFETUADOS", "INTEGRIDADE FINAL" }
     };
     Color cores[2][2] = {
-        { YELLOW, SKYBLUE }, // Trocado de CYAN para SKYBLUE
+        { YELLOW, SKYBLUE }, 
         { MAGENTA, LIME }
     };
 
@@ -146,8 +146,8 @@ static void DesenharTelaScore(int larguraTela, int alturaTela, int scores[2][2])
     DesenharTextoCentralizado("BANCO DE DADOS TÁTICOS", 65, 36, RAYWHITE);
     DesenharTextoCentralizado("Estatísticas de desempenho em tempo real", 112, 18, GRAY);
 
-    for (int linha = 0; linha < linhas; linha++) {
-        for (int coluna = 0; coluna < colunas; coluna++) {
+    for (int linha = 0; linha < qtdLinhas; linha++) {
+        for (int coluna = 0; coluna < qtdColunas; coluna++) {
             int x = inicioX + coluna * (larguraCelula + espaco);
             int y = inicioY + linha * (alturaCelula + espaco);
             Rectangle celula = { (float)x, (float)y, (float)larguraCelula, (float)alturaCelula };
@@ -192,7 +192,8 @@ int main(void){
     struct Player nave;
     nave.vida = 100;
     nave.pontos = 0;
-    Lista* historicoPontos = lerPontos();
+    
+    Lista* historicoPontos = LerPontos();
     int recorde = 0;
     if (historicoPontos != NULL) {
         recorde = historicoPontos->pontos;
@@ -216,7 +217,6 @@ int main(void){
         estrelas[i].cor = (GetRandomValue(0, 1) == 0) ? SKYBLUE : WHITE;
     }
 
-    // Configurado exatamente com o nome que aparece na sua pasta assets
     Texture2D textAsteroide = LoadTexture("assets/asteroide.png.png");
     Texture2D textNave = LoadTexture("assets/nave.png"); 
 
@@ -351,10 +351,8 @@ int main(void){
                 if (nave.vida <= 0) {
                     nave.vida = 0;
 
-                    // --- SALVA O ARQUIVO AQUI ---
-                    Add_crecente(&historicoScores, nave.pontos, (int)GetTime());
-                    salvarPontos(historicoScores);
-                    // ----------------------------
+                    Add_crecente(&historicoPontos, nave.pontos, (int)GetTime());
+                    salvarPontos(historicoPontos);
 
                     telaAtual = TELA_GAMEOVER;
                     ShowCursor();
@@ -429,7 +427,7 @@ int main(void){
                 Vector2 p2 = { 365, 445 };
                 Vector2 p3 = { 435, 445 };
                 DrawTriangle(p1, p2, p3, DARKBLUE);
-                DrawTriangleLines(p1, p2, p3, SKYBLUE); // Mudado de CYAN para SKYBLUE
+                DrawTriangleLines(p1, p2, p3, SKYBLUE); 
                 DrawRectangle(393, 410, 14, 30, SKYBLUE); 
                 DrawCircleGradient(400, 445, 12, ORANGE, (Color){255,0,0,0}); 
             } else {
@@ -440,7 +438,7 @@ int main(void){
             }
 
             DrawRectangle(0, 450, larguraTela, 150, (Color){ 10, 14, 26, 255 }); 
-            DrawRectangle(0, 450, larguraTela, 4, SKYBLUE); // Mudado de CYAN para SKYBLUE
+            DrawRectangle(0, 450, larguraTela, 4, SKYBLUE); 
             
             for(int gi = 0; gi < larguraTela; gi += 40) {
                 DrawLine(gi, 454, gi, 600, (Color){ 0, 150, 255, 25 });
