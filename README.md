@@ -24,7 +24,7 @@ Você pode instalar tudo isso no MSYS2 (UCRT64) com os pacotes correspondentes.
 
 ## 🚀 Como Jogar
 
-Após a compilação bem servida, você pode executar o jogo com o seguinte comando no terminal:
+Após a compilação, você pode executar o jogo com o seguinte comando no terminal:
 
 ```bash
 ./jogo.exe
@@ -38,6 +38,37 @@ Após a compilação bem servida, você pode executar o jogo com o seguinte coma
 * **S:** Abre a interface de registros para consultar suas pontuações e saúde atual.
 * **Enter:** Inicia o jogo ou retorna aos menus principais.
 * **Backspace:** Retorna para a tela anterior nos menus.
+
+## 🎮 Recursos Implementados
+
+* Tela inicial com acesso ao jogo e aos registros de score.
+* Campo de batalha com estrelas animadas e chuva de asteroides.
+* Mira controlada pelo mouse e disparos contra os asteroides.
+* Sistema de colisão, pontuação, recorde e integridade da nave.
+* Tela de game over e reinicialização da partida.
+* Salvamento local das pontuações no arquivo `DADOS.txt`.
+
+## ✅ Teste de Execução
+
+O jogo foi compilado e executado com sucesso em **31 de maio de 2026**.
+
+Durante o teste, foram verificados:
+
+* Compilação do código sem erros.
+* Inicialização da janela com a biblioteca raylib.
+* Carregamento da textura dos asteroides.
+* Exibição da tela inicial e inicialização do loop principal do jogo.
+* Uso do desenho alternativo da nave quando o arquivo opcional `assets/nave.png` não está presente.
+
+Na primeira execução, o arquivo `DADOS.txt` ainda não existe. Ele será utilizado para armazenar os scores após o encerramento das partidas.
+
+## 📹 Demonstração
+
+Para adicionar uma gravação da partida ao repositório, envie o vídeo para a seção de releases do GitHub ou para uma plataforma de vídeos e inclua o link abaixo:
+
+```text
+Link da demonstração: adicionar após a gravação
+```
 
 ## 🧹 Limpeza (Opcional)
 
