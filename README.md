@@ -64,11 +64,9 @@ Na primeira execução, o arquivo `DADOS.txt` ainda não existe. Ele será utili
 
 ## 📹 Demonstração
 
-Para adicionar uma gravação da partida ao repositório, envie o vídeo para a seção de releases do GitHub ou para uma plataforma de vídeos e inclua o link abaixo:
+Assista à gravação de uma partida:
 
-```text
-Link da demonstração: adicionar após a gravação
-```
+[▶️ Ver demonstração do jogo](demo/defesa-celestial-demo.mov)
 
 ## 🧹 Limpeza (Opcional)
 
