@@ -66,7 +66,7 @@ Na primeira execução, o arquivo `DADOS.txt` ainda não existe. Ele será utili
 
 Assista à gravação de uma partida:
 
-[▶️ Ver demonstração do jogo](demo/defesa-celestial-demo.mp4)
+[▶️ Ver demonstração do jogo](https://github.com/user-attachments/assets/42e29472-19fc-406c-a8d3-09b0631f5c35)
 
 ## 🧹 Limpeza (Opcional)
 
